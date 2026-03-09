@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>一笔成新字 - 小朋友汉字游戏</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 10px;
+        }
+        
+        .header h1 {
+            font-size: 1.8rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        .game-container {
+            background: white;
+            border-radius: 20px;
+            padding: 15px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+        
+        .level-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        
+        .level {
+            font-size: 1rem;
+            color: #667eea;
+            font-weight: bold;
+        }
+        
+        .score {
+            font-size: 1rem;
+            color: #764ba2;
+            font-weight: bold;
+        }
+        
+        .question-box {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        
+        .hint {
+            font-size: 1rem;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        
+        .original-char {
+            font-size: 4rem;
+            color: #333;
+            margin: 10px 0;
+        }
+        
+        .instruction {
+            font-size: 0.9rem;
+            color: #888;
+            margin-top: 5px;
+        }
+        
+        .canvas-container {
+            position: relative;
+            width: 100%;
+            height: 200px;
+            background: #f0f0f0;
+            border-radius: 15px;
+            margin-bottom: 15px;
+            overflow: hidden;
+            touch-action: none;
+        }
+        
+        #drawCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            cursor: crosshair;
+        }
+        
+        .guide-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 6rem;
+            color: #ddd;
+            pointer-events: none;
+        }
+        
+        .buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .btn {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+        
+        .btn-clear {
+            background: #ff6b6b;
+            color: white;
+        }
+        
+        .btn-clear:active {
+            background: #ee5a5a;
+            transform: scale(0.95);
+        }
+        
+        .btn-submit {
+            background: #51cf66;
+            color: white;
+        }
+        
+        .btn-submit:active {
+            background: #40c057;
+            transform: scale(0.95);
+        }
+        
+        .btn-hint {
+            background: #ffd43b;
+            color: #333;
+        }
+        
+        .btn-hint:active {
+            background: #fcc419;
+            transform: scale(0.95);
+        }
+        
+        .result-box {
+            text-align: center;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            display: none;
+        }
+        
+        .result-box.correct {
+            background: #d3f9d8;
+            color: #2b8a3e;
+            display: block;
+        }
+        
+        .result-box.wrong {
+            background: #ffe3e3;
+            color: #c92a2a;
+            display: block;
+        }
+        
+        .result-char {
+            font-size: 3rem;
+            margin: 10px 0;
+        }
+        
+        .result-text {
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+        
+        .next-btn {
+            background: #667eea;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-top: 10px;
+            display: none;
+        }
+        
+        .next-btn.show {
+            display: inline-block;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: width 0.3s;
+        }
+        
+        .celebration {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+        }
+        
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            animation: fall 3s linear forwards;
+        }
+        
+        @keyframes fall {
+            to {
+                transform: translateY(100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+        
+        .hint-box {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 10px;
+            padding: 10px;
+            margin-bottom: 15px;
+            display: none;
+            text-align: center;
+        }
+        
+        .hint-box.show {
+            display: block;
+        }
+        
+        .hint-box p {
+            color: #856404;
+            font-size: 0.95rem;
+        }
+        
+        .stroke-demo {
+            font-size: 4rem;
+            color: #667eea;
+            margin: 10px 0;
+        }
+
+        .start-screen {
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .start-screen h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+        }
+        
+        .start-screen p {
+            color: #666;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+        
+        .start-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 40px;
+            border: none;
+            border-radius: 30px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        .game-area {
+            display: none;
+        }
+        
+        .game-area.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎨 一笔成新字</h1>
+        <p>动动小手，一笔变成新汉字！</p>
+    </div>
+    
+    <div class="game-container">
+        <!-- 开始界面 -->
+        <div class="start-screen" id="startScreen">
+            <h2>👋 小朋友你好！</h2>
+            <p>这是一个有趣的汉字游戏<br>
+            在原来的字上加一笔<br>
+            就能变成一个新的字哦！<br>
+            快来试试吧！</p>
+            <button class="start-btn" onclick="startGame()">🚀 开始游戏</button>
+        </div>
+        
+        <!-- 游戏区域 -->
+        <div class="game-area" id="gameArea">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+            </div>
+            
+            <div class="level-info">
+                <span class="level">第 <span id="currentLevel">1</span> 关</span>
+                <span class="score">⭐ <span id="score">0</span> 分</span>
+            </div>
+            
+            <div class="question-box">
+                <div class="hint">这个字加一笔，会变成什么？</div>
+                <div class="original-char" id="originalChar">口</div>
+                <div class="instruction">👇 在下面画一笔</div>
+            </div>
+            
+            <div class="hint-box" id="hintBox">
+                <p>💡 提示：<span id="hintText"></span></p>
+                <div class="stroke-demo" id="strokeDemo"></div>
+            </div>
+            
+            <div class="canvas-container" id="canvasContainer">
+                <div class="guide-text" id="guideText">口</div>
+                <canvas id="drawCanvas"></canvas>
+            </div>
+            
+            <div class="buttons">
+                <button class="btn btn-clear" onclick="clearCanvas()">🗑️ 重画</button>
+                <button class="btn btn-hint" onclick="showHint()">💡 提示</button>
+                <button class="btn btn-submit" onclick="checkAnswer()">✅ 完成</button>
+            </div>
+            
+            <div class="result-box" id="resultBox">
+                <div class="result-char" id="resultChar"></div>
+                <div class="result-text" id="resultText"></div>
+                <button class="next-btn" id="nextBtn" onclick="nextLevel()">下一关 ➡️</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="celebration" id="celebration"></div>
+
+    <script>
+        // 游戏数据 - 适合5-7岁儿童的简单汉字
+        const levels = [
+            { from: '口', to: '日', hint: '在中间加一横', stroke: '一' },
+            { from: '日', to: '目', hint: '再加一横', stroke: '一' },
+            { from: '口', to: '中', hint: '中间加一竖', stroke: '丨' },
+            { from: '人', to: '大', hint: '加一横', stroke: '一' },
+            { from: '大', to: '天', hint: '上面加一横', stroke: '一' },
+            { from: '大', to: '太', hint: '加一点', stroke: '丶' },
+            { from: '木', to: '禾', hint: '上面加一撇', stroke: '丿' },
+            { from: '木', to: '本', hint: '下面加一横', stroke: '一' },
+            { from: '木', to: '未', hint: '上面加一横', stroke: '一' },
+            { from: '十', to: '土', hint: '下面加一横', stroke: '一' },
+            { from: '十', to: '千', hint: '上面加一撇', stroke: '丿' },
+            { from: '二', to: '三', hint: '再加一横', stroke: '一' },
+            { from: '二', to: '干', hint: '中间加一竖', stroke: '丨' },
+            { from: '一', to: '二', hint: '再加一横', stroke: '一' },
+            { from: '一', to: '十', hint: '加一竖', stroke: '丨' },
+            { from: '白', to: '百', hint: '上面加一横', stroke: '一' },
+            { from: '月', to: '用', hint: '中间加一竖', stroke: '丨' },
+            { from: '王', to: '玉', hint: '加一点', stroke: '丶' },
+            { from: '几', to: '凡', hint: '加一点', stroke: '丶' },
+            { from: '刀', to: '刃', hint: '加一点', stroke: '丶' }
+        ];
+        
+        let currentLevel = 0;
+        let score = 0;
+        let isDrawing = false;
+        let hasDrawn = false;
+        let canvas, ctx;
+        
+        // 初始化画布
+        function initCanvas() {
+            canvas = document.getElementById('drawCanvas');
+            const container = document.getElementById('canvasContainer');
+            canvas.width = container.offsetWidth;
+            canvas.height = container.offsetHeight;
+            ctx = canvas.getContext('2d');
+            
+            ctx.strokeStyle = '#667eea';
+            ctx.lineWidth = 8;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            
+            // 鼠标事件
+            canvas.addEventListener('mousedown', startDraw);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDraw);
+            canvas.addEventListener('mouseout', stopDraw);
+            
+            // 触摸事件
+            canvas.addEventListener('touchstart', handleTouch);
+            canvas.addEventListener('touchmove', handleTouch);
+            canvas.addEventListener('touchend', stopDraw);
+        }
+        
+        function handleTouch(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const rect = canvas.getBoundingClientRect();
+            const x = touch.clientX - rect.left;
+            const y = touch.clientY - rect.top;
+            
+            if (e.type === 'touchstart') {
+                isDrawing = true;
+                hasDrawn = true;
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+            } else if (e.type === 'touchmove' && isDrawing) {
+                ctx.lineTo(x, y);
+                ctx.stroke();
+            }
+        }
+        
+        function startDraw(e) {
+            isDrawing = true;
+            hasDrawn = true;
+            const rect = canvas.getBoundingClientRect();
+            ctx.beginPath();
+            ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+        }
+        
+        function draw(e) {
+            if (!isDrawing) return;
+            const rect = canvas.getBoundingClientRect();
+            ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+            ctx.stroke();
+        }
+        
+        function stopDraw() {
+            isDrawing = false;
+        }
+        
+        function clearCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            hasDrawn = false;
+            document.getElementById('resultBox').className = 'result-box';
+            document.getElementById('resultBox').style.display = 'none';
+        }
+        
+        function startGame() {
+            document.getElementById('startScreen').style.display = 'none';
+            document.getElementById('gameArea').classList.add('show');
+            initCanvas();
+            loadLevel();
+        }
+        
+        function loadLevel() {
+            const level = levels[currentLevel];
+            document.getElementById('currentLevel').textContent = currentLevel + 1;
+            document.getElementById('originalChar').textContent = level.from;
+            document.getElementById('guideText').textContent = level.from;
+            document.getElementById('hintBox').classList.remove('show');
+            document.getElementById('resultBox').className = 'result-box';
+            document.getElementById('resultBox').style.display = 'none';
+            document.getElementById('nextBtn').classList.remove('show');
+            
+            // 更新进度条
+            const progress = ((currentLevel) / levels.length) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+            
+            clearCanvas();
+        }
+        
+        function showHint() {
+            const level = levels[currentLevel];
+            document.getElementById('hintText').textContent = level.hint;
+            document.getElementById('strokeDemo').textContent = level.stroke;
+            document.getElementById('hintBox').classList.add('show');
+            score = Math.max(0, score - 5);
+            document.getElementById('score').textContent = score;
+        }
+        
+        function checkAnswer() {
+            if (!hasDrawn) {
+                alert('先画一笔哦！');
+                return;
+            }
+            
+            const level = levels[currentLevel];
+            const resultBox = document.getElementById('resultBox');
+            const resultChar = document.getElementById('resultChar');
+            const resultText = document.getElementById('resultText');
+            const nextBtn = document.getElementById('nextBtn');
+            
+            // 简化判断：只要画了就算对（适合小朋友）
+            resultBox.className = 'result-box correct';
+            resultChar.textContent = level.to;
+            resultText.textContent = `太棒了！"${level.from}" + 一笔 = "${level.to}"`;
+            nextBtn.classList.add('show');
+            
+            score += 10;
+            document.getElementById('score').textContent = score;
+            
+            createConfetti();
+        }
+        
+        function nextLevel() {
+            currentLevel++;
+            if (currentLevel >= levels.length) {
+                // 通关
+                alert(`🎉 恭喜你通关了！总分：${score}分`);
+                currentLevel = 0;
+                score = 0;
+                document.getElementById('score').textContent = score;
+            }
+            loadLevel();
+        }
+        
+        function createConfetti() {
+            const celebration = document.getElementById('celebration');
+            const colors = ['#ff6b6b', '#feca57', '#48dbfb', '#ff9ff3', '#54a0ff', '#5f27cd'];
+            
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + '%';
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.animationDelay = Math.random() * 2 + 's';
+                confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+                celebration.appendChild(confetti);
+                
+                setTimeout(() => confetti.remove(), 3000);
+            }
+        }
+        
+        // 窗口大小改变时重新初始化画布
+        window.addEventListener('resize', () => {
+            if (canvas) {
+                initCanvas();
+            }
+        });
+    </script>
+</body>
+</html>
