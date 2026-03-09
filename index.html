@@ -386,27 +386,28 @@
 
     <script>
         // 游戏数据 - 适合5-7岁儿童的简单汉字
+        // position: 'top'上面, 'bottom'下面, 'middle'中间, 'left'左边, 'right'右边, 'center'正中心
         const levels = [
-            { from: '口', to: '日', hint: '在中间加一横', stroke: '一' },
-            { from: '日', to: '目', hint: '再加一横', stroke: '一' },
-            { from: '口', to: '中', hint: '中间加一竖', stroke: '丨' },
-            { from: '人', to: '大', hint: '加一横', stroke: '一' },
-            { from: '大', to: '天', hint: '上面加一横', stroke: '一' },
-            { from: '大', to: '太', hint: '加一点', stroke: '丶' },
-            { from: '木', to: '禾', hint: '上面加一撇', stroke: '丿' },
-            { from: '木', to: '本', hint: '下面加一横', stroke: '一' },
-            { from: '木', to: '未', hint: '上面加一横', stroke: '一' },
-            { from: '十', to: '土', hint: '下面加一横', stroke: '一' },
-            { from: '十', to: '千', hint: '上面加一撇', stroke: '丿' },
-            { from: '二', to: '三', hint: '再加一横', stroke: '一' },
-            { from: '二', to: '干', hint: '中间加一竖', stroke: '丨' },
-            { from: '一', to: '二', hint: '再加一横', stroke: '一' },
-            { from: '一', to: '十', hint: '加一竖', stroke: '丨' },
-            { from: '白', to: '百', hint: '上面加一横', stroke: '一' },
-            { from: '月', to: '用', hint: '中间加一竖', stroke: '丨' },
-            { from: '王', to: '玉', hint: '加一点', stroke: '丶' },
-            { from: '几', to: '凡', hint: '加一点', stroke: '丶' },
-            { from: '刀', to: '刃', hint: '加一点', stroke: '丶' }
+            { from: '口', to: '日', hint: '在中间加一横', stroke: '一', position: 'middle', strokeType: 'horizontal' },
+            { from: '日', to: '目', hint: '再加一横', stroke: '一', position: 'middle', strokeType: 'horizontal' },
+            { from: '口', to: '中', hint: '中间加一竖', stroke: '丨', position: 'middle', strokeType: 'vertical' },
+            { from: '人', to: '大', hint: '加一横', stroke: '一', position: 'middle', strokeType: 'horizontal' },
+            { from: '大', to: '天', hint: '上面加一横', stroke: '一', position: 'top', strokeType: 'horizontal' },
+            { from: '大', to: '太', hint: '加一点', stroke: '丶', position: 'bottom-right', strokeType: 'dot' },
+            { from: '木', to: '禾', hint: '上面加一撇', stroke: '丿', position: 'top', strokeType: 'slash' },
+            { from: '木', to: '本', hint: '下面加一横', stroke: '一', position: 'bottom', strokeType: 'horizontal' },
+            { from: '木', to: '未', hint: '上面加一横', stroke: '一', position: 'top', strokeType: 'horizontal' },
+            { from: '十', to: '土', hint: '下面加一横', stroke: '一', position: 'bottom', strokeType: 'horizontal' },
+            { from: '十', to: '千', hint: '上面加一撇', stroke: '丿', position: 'top', strokeType: 'slash' },
+            { from: '二', to: '三', hint: '再加一横', stroke: '一', position: 'middle', strokeType: 'horizontal' },
+            { from: '二', to: '干', hint: '中间加一竖', stroke: '丨', position: 'middle', strokeType: 'vertical' },
+            { from: '一', to: '二', hint: '再加一横', stroke: '一', position: 'bottom', strokeType: 'horizontal' },
+            { from: '一', to: '十', hint: '加一竖', stroke: '丨', position: 'center', strokeType: 'vertical' },
+            { from: '白', to: '百', hint: '上面加一横', stroke: '一', position: 'top', strokeType: 'horizontal' },
+            { from: '月', to: '用', hint: '中间加一竖', stroke: '丨', position: 'middle', strokeType: 'vertical' },
+            { from: '王', to: '玉', hint: '加一点', stroke: '丶', position: 'bottom-right', strokeType: 'dot' },
+            { from: '几', to: '凡', hint: '加一点', stroke: '丶', position: 'top', strokeType: 'dot' },
+            { from: '刀', to: '刃', hint: '加一点', stroke: '丶', position: 'top-right', strokeType: 'dot' }
         ];
         
         let currentLevel = 0;
@@ -581,9 +582,67 @@
             };
         }
         
+        // 验证笔画位置和类型是否正确
+        function validateStroke(stroke, level) {
+            const canvasCenterX = canvas.width / 2;
+            const canvasCenterY = canvas.height / 2;
+            const charWidth = canvas.width * 0.4;  // 原字大概宽度
+            const charHeight = canvas.height * 0.5; // 原字大概高度
+            
+            // 计算笔画相对于画布中心的位置
+            const relativeX = stroke.centerX - canvasCenterX;
+            const relativeY = stroke.centerY - canvasCenterY;
+            
+            // 判断笔画位置
+            let position = '';
+            const topThreshold = -charHeight * 0.3;
+            const bottomThreshold = charHeight * 0.3;
+            const leftThreshold = -charWidth * 0.3;
+            const rightThreshold = charWidth * 0.3;
+            
+            if (relativeY < topThreshold) {
+                position = 'top';
+            } else if (relativeY > bottomThreshold) {
+                position = 'bottom';
+            } else if (relativeX < leftThreshold) {
+                position = 'left';
+            } else if (relativeX > rightThreshold) {
+                position = 'right';
+            } else {
+                position = 'middle';
+            }
+            
+            // 特殊位置判断
+            if (position === 'bottom' && relativeX > 0) {
+                position = 'bottom-right';
+            } else if (position === 'top' && relativeX > 0) {
+                position = 'top-right';
+            }
+            
+            // 判断笔画类型
+            let strokeType = '';
+            if (stroke.isHorizontal) {
+                strokeType = 'horizontal';
+            } else if (stroke.isVertical) {
+                strokeType = 'vertical';
+            } else if (stroke.isDot) {
+                strokeType = 'dot';
+            } else {
+                strokeType = 'slash';
+            }
+            
+            return {
+                position: position,
+                strokeType: strokeType,
+                positionMatch: position === level.position || 
+                              (level.position === 'center' && position === 'middle'),
+                typeMatch: strokeType === level.strokeType
+            };
+        }
+        
         function checkAnswer() {
             if (!hasDrawn) {
-                showResult('wrong', '✏️', '先画一笔哦！');
+                showResult('wrong', '❌', '先画一笔哦！');
                 return;
             }
             
@@ -591,82 +650,73 @@
             const stroke = getStrokeData();
             
             if (!stroke) {
-                showResult('wrong', '✏️', '先画一笔哦！');
+                showResult('wrong', '❌', '先画一笔哦！');
                 return;
             }
             
-            // 检查笔画是否在合理范围内（不能太离谱）
-            const canvasCenterX = canvas.width / 2;
-            const canvasCenterY = canvas.height / 2;
-            const maxDistance = Math.min(canvas.width, canvas.height) * 0.6;
-            
-            const distanceFromCenter = Math.sqrt(
-                Math.pow(stroke.centerX - canvasCenterX, 2) + 
-                Math.pow(stroke.centerY - canvasCenterY, 2)
-            );
-            
-            // 如果画得太远（在字外面画圈），提示错误
-            if (distanceFromCenter > maxDistance) {
-                showResult('wrong', '❌', '这个字不存在哦！\n要在原字上加一笔~');
-                return;
-            }
-            
-            // 验证笔画类型是否匹配
-            let strokeValid = false;
-            const expectedStroke = level.stroke;
-            
-            if (expectedStroke === '一' && stroke.isHorizontal) {
-                strokeValid = true;
-            } else if (expectedStroke === '丨' && stroke.isVertical) {
-                strokeValid = true;
-            } else if (expectedStroke === '丶' && stroke.isDot) {
-                strokeValid = true;
-            } else if ((expectedStroke === '丿' || expectedStroke === '㇏') && stroke.isSlash) {
-                strokeValid = true;
-            }
-            
-            // 对于小朋友，如果笔画类型不太离谱，也允许通过
-            // 但如果画的是圈或完全不对的形状，就提示错误
-            const minStrokeLength = 15;
-            const isTooSmall = stroke.width < minStrokeLength && stroke.height < minStrokeLength;
-            
-            // 更严格的圈检测：宽高接近、面积较大、在中心区域外
-            const isCircle = stroke.width > 30 && stroke.height > 30 && 
-                            Math.abs(stroke.width - stroke.height) < 40 &&
-                            stroke.width * stroke.height > 2000;
-            
-            // 检测是否画在字外面（笔画中心偏离画布中心太远）
-            const isOutside = distanceFromCenter > maxDistance * 0.5;
-            
-            // 检测笔画是否包围了原字（画了一个大圈把字圈起来）
-            const surroundsChar = stroke.width > canvas.width * 0.5 && 
-                                  stroke.height > canvas.height * 0.5;
-            
-            if (isTooSmall) {
+            // 检查是否画得太小
+            const minStrokeLength = 10;
+            if (stroke.width < minStrokeLength && stroke.height < minStrokeLength) {
                 showResult('wrong', '❌', '画得太小了，再画大一点~');
                 return;
             }
             
-            if (isCircle || surroundsChar) {
-                showResult('wrong', '❌', '这样画不对哦！\n要在"日"字里面加一横');
+            // 检测是否画圈（宽高接近且面积大）
+            const isCircle = stroke.width > 40 && stroke.height > 40 && 
+                            Math.abs(stroke.width - stroke.height) < 50;
+            
+            if (isCircle) {
+                showResult('wrong', '❌', '这样画不对哦！\n不能画圈圈');
                 return;
             }
             
-            if (isOutside && !strokeValid) {
-                showResult('wrong', '❌', '这样画不对哦！\n要在原字上面加笔画');
+            // 验证笔画位置和类型
+            const validation = validateStroke(stroke, level);
+            
+            // 如果位置和类型都匹配，回答正确
+            if (validation.positionMatch && validation.typeMatch) {
+                showResult('correct', level.to, `太棒了！"${level.from}" + 一笔 = "${level.to}"`);
+                score += 10;
+                document.getElementById('score').textContent = score;
+                createConfetti();
+                
+                // 2秒后自动进入下一关
+                setTimeout(() => {
+                    nextLevel();
+                }, 2000);
                 return;
             }
             
-            // 回答正确
-            showResult('correct', level.to, `太棒了！"${level.from}" + 一笔 = "${level.to}"`);
-            score += 10;
-            document.getElementById('score').textContent = score;
-            createConfetti();
+            // 位置和类型不匹配，给出具体错误提示
+            let errorMsg = '';
             
-            // 2秒后自动进入下一关
-            setTimeout(() => {
-                nextLevel();
-            }, 2000);
+            if (!validation.typeMatch) {
+                // 笔画类型不对
+                if (level.strokeType === 'horizontal') {
+                    errorMsg = '这样画不对哦！\n要画一横（一）';
+                } else if (level.strokeType === 'vertical') {
+                    errorMsg = '这样画不对哦！\n要画一竖（丨）';
+                } else if (level.strokeType === 'dot') {
+                    errorMsg = '这样画不对哦！\n要点一个点（丶）';
+                } else if (level.strokeType === 'slash') {
+                    errorMsg = '这样画不对哦！\n要画一撇（丿）';
+                }
+            } else if (!validation.positionMatch) {
+                // 位置不对
+                if (level.position === 'top') {
+                    errorMsg = '这样画不对哦！\n要在上面画';
+                } else if (level.position === 'bottom') {
+                    errorMsg = '这样画不对哦！\n要在下面画';
+                } else if (level.position === 'middle') {
+                    errorMsg = '这样画不对哦！\n要在中间画';
+                } else if (level.position === 'bottom-right') {
+                    errorMsg = '这样画不对哦！\n要在右下角画';
+                } else if (level.position === 'top-right') {
+                    errorMsg = '这样画不对哦！\n要在右上角画';
+                }
+            }
+            
+            showResult('wrong', '❌', errorMsg || '这样画不对哦！再试试看~');
         }
         
         function showResult(type, char, text) {
