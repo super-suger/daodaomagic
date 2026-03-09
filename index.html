@@ -629,16 +629,31 @@
             // 但如果画的是圈或完全不对的形状，就提示错误
             const minStrokeLength = 15;
             const isTooSmall = stroke.width < minStrokeLength && stroke.height < minStrokeLength;
-            const isCircle = stroke.width > 50 && stroke.height > 50 && 
-                            Math.abs(stroke.width - stroke.height) < 30;
+            
+            // 更严格的圈检测：宽高接近、面积较大、在中心区域外
+            const isCircle = stroke.width > 30 && stroke.height > 30 && 
+                            Math.abs(stroke.width - stroke.height) < 40 &&
+                            stroke.width * stroke.height > 2000;
+            
+            // 检测是否画在字外面（笔画中心偏离画布中心太远）
+            const isOutside = distanceFromCenter > maxDistance * 0.5;
+            
+            // 检测笔画是否包围了原字（画了一个大圈把字圈起来）
+            const surroundsChar = stroke.width > canvas.width * 0.5 && 
+                                  stroke.height > canvas.height * 0.5;
             
             if (isTooSmall) {
-                showResult('wrong', '✏️', '画得太小了，再画大一点~');
+                showResult('wrong', '❌', '画得太小了，再画大一点~');
                 return;
             }
             
-            if (isCircle) {
-                showResult('wrong', '❌', '这个字不存在哦！\n不能画圈圈~');
+            if (isCircle || surroundsChar) {
+                showResult('wrong', '❌', '这样画不对哦！\n要在"日"字里面加一横');
+                return;
+            }
+            
+            if (isOutside && !strokeValid) {
+                showResult('wrong', '❌', '这样画不对哦！\n要在原字上面加笔画');
                 return;
             }
             
